@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foundation</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #111;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        canvas {
+            background: #222;
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        h1 {
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        p {
+            color: #888;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Foundation</h1>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <p>Use Left / Right Arrow Keys (or A / D) to move. Press <b>P</b> to Pause.</p>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        //PAUSE MENU
+        const PAUSED = "paused";
+        const RUNNING = "running";
+
+        let gameState = RUNNING; // Start with game running
+
+        // Ball State
+        let ballRadius = 8;
+        let x = canvas.width / 2;
+        let y = canvas.height - 30;
+        let dx = 2;
+        let dy = -2;
+        let ballvelocitydisplay = 2;
+
+        // Paddle State
+        const paddleHeight = 10;
+        const paddleWidth = 75;
+        let paddleX = (canvas.width - paddleWidth) / 2;
+
+        // Input State
+        let rightPressed = false;
+        let leftPressed = false;
+        let PausePressed = false;
+
+        // Brick Grid Parameters
+        //Level 1
+        let brickRowCount = 3;
+        let brickColumnCount = 5;
+        const brickWidth = 75;
+        const brickHeight = 20;
+        const brickPadding = 10;
+        const brickOffsetTop = 30;
+        const brickOffsetLeft = 30;
+
+        // Initializing Grid Layout
+        let bricks = [];
+        for (let c = 0; c < brickColumnCount; c++) {
+            bricks[c] = [];
+            for (let r = 0; r < brickRowCount; r++) {
+                bricks[c][r] = { x: 0, y: 0, status: 1 }; // status 1 = visible / intact
+            }
+        }
+
+        // Gameplay State
+        let score = 0;
+        let totalscore = 0;
+        let level = 1;
+
+        // Event Listeners for Input
+        document.addEventListener("keydown", keyDownHandler, false);
+        document.addEventListener("keyup", keyUpHandler, false);
+
+        function keyDownHandler(e) {
+            if (e.key === "Right" || e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+                rightPressed = true;
+            } else if (e.key === "Left" || e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+                leftPressed = true;
+            } else if (e.key === "P" || e.key === "Space" || e.key.toLowerCase() === "p") {
+                    if (gameState === RUNNING) {
+                        gameState = PAUSED;
+                    } else {
+                        clearCanvas();
+                        gameState = RUNNING;
+                    }
+                }
+        }
+
+        function keyUpHandler(e) {
+            if (e.key === "Right" || e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+                rightPressed = false;
+            } else if (e.key === "Left" || e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+                leftPressed = false;
+                }
+            }
+
+        // Ball & Brick Grid Collision Logic
+        function collisionDetection() {
+            for (let c = 0; c < brickColumnCount; c++) {
+                for (let r = 0; r < brickRowCount; r++) {
+                    let b = bricks[c][r];
+                    if (b.status === 1) {
+                        // Simple Axis-Aligned Bounding Box (AABB) intersection check
+                        if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                            dy = -dy; // Reverse vertical trajectory
+                            b.status = 0; // Deactivate brick
+                            score++;
+                            totalscore++;
+                            if (score === brickRowCount * brickColumnCount) {
+                                //alert("YOU WIN, CONGRATULATIONS!");
+                                alert("LEVEL CLEARED, MOVING TO NEXT LEVEL!\n !!WARNING!! Ball Velocity Increased!!");
+
+                                //Reset
+                                resetGameState();
+                                
+                                //Load Level 2
+                                level = level + 1;
+                                drawNextLevel();
+                                //We Reload
+                                //document.location.reload();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        function resetGameState() {
+            // Reset ball position and velocity
+            x = canvas.width / 2;
+            y = canvas.height - 30;
+
+            //velocity reset
+            //dx = 2;
+            dy = -2;
+
+            //velocity increase per level
+            //dx += dx;
+            dx += dx -1;
+            ballvelocitydisplay = ballvelocitydisplay +1;
+            //ballvelocitydisplay += ballvelocitydisplay;
+            //dy = dy + 2;
+
+            // Reset paddle position
+            paddleX = (canvas.width - paddleWidth) / 2;
+
+            //Save Score to TOTAL SCORE, before we clear it
+            //totalscore = totalscore + score;
+
+            // Reset score for the new level
+            score = 0;
+
+            // Optionally, reset other game state variables as needed
+        }
+        
+        // Rendering Routines
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawPaddle() {
+            ctx.beginPath();
+            ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawBricks() {
+            for (let c = 0; c < brickColumnCount; c++) {
+                for (let r = 0; r < brickRowCount; r++) {
+                    if (bricks[c][r].status === 1) {
+                        let brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+                        let brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+                        bricks[c][r].x = brickX;
+                        bricks[c][r].y = brickY;
+                        ctx.beginPath();
+                        ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                        ctx.fillStyle = "#FF5733";
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        function drawScore() {
+            ctx.font = "16px sans-serif";
+            ctx.fillStyle = "#FFF";
+            ctx.fillText(`Score: ${score}`, 8, 20);
+        }
+
+        function drawTotalScore() {
+            ctx.font = "16px sans-serif";
+            ctx.fillStyle = "#FFF";
+            ctx.fillText(`Total Score: ${totalscore}`, 300, 20);
+        }
+
+        function drawLevel() {
+            ctx.font = "16px sans-serif";
+            ctx.fillStyle = "#FFF";
+            ctx.fillText(`Level: ${level}`, 420, 20);
+        }
+
+        function drawPauseScreen() {
+            ctx.font = "24px sans-serif";
+            ctx.fillStyle = "#FFF";
+            ctx.fillText("PAUSED", canvas.width / 2 - 60, canvas.height / 2);
+            ctx.fillText("Press P to Resume", canvas.width / 2 - 120, canvas.height / 2 + 30);
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawNextLevel() {
+            // Brick Grid Parameters
+            //Level 2
+            let brickRowCount = 5;
+            let brickColumnCount = 5;
+            const brickWidth = 75;
+            const brickHeight = 20;
+            const brickPadding = 10;
+            const brickOffsetTop = 30;
+            const brickOffsetLeft = 30;
+
+            
+            // Re-initializing Grid Layout
+            bricks.length = 0; // Clear existing bricks
+            
+            for (let c = 0; c < brickColumnCount; c++) {
+                bricks[c] = [];
+                for (let r = 0; r < brickRowCount; r++) {
+                    bricks[c][r] = { x: 0, y: 0, status: 1 }; // status 1 = visible / intact
+                }
+            }
+
+            // Draw the new level's bricks
+            drawBricks();
+            //collisionDetection();
+        }
+        
+        // Primary Core Loop
+        function gameLoop() {
+        //PAUSE MENU    
+        if (gameState === PAUSED) {
+            drawPauseScreen();
+            requestAnimationFrame(gameLoop);
+            return; // Stop updating the game state when paused
+        }
+            // Clear prior canvas frame
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Render current step state
+            drawBricks();
+            drawBall();
+            drawPaddle();
+            drawScore();
+            drawTotalScore();
+            drawLevel();
+            collisionDetection();
+
+            // Wall Collision Physics (Left & Right boundaries)
+            if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+                dx = -dx;
+            }
+            
+            // Wall Collision Physics (Top boundary)
+            if (y + dy < ballRadius) {
+                dy = -dy;
+            } 
+            // Bottom Boundary: Handle Paddle deflection vs Loss state
+            else if (y + dy > canvas.height - ballRadius) {
+                if (x > paddleX && x < paddleX + paddleWidth) {
+                    dy = -dy;
+                } else {
+                    //Add Up Score
+                    //score = score + totalscore;
+
+                    //Print out Score
+                    alert("GAME OVER\n Total Score: " + totalscore + "\n Your Ball Velocity: " + ballvelocitydisplay);
+
+                    //Reload
+                    document.location.reload();
+                    return; // Terminate game loop execution
+                }
+            }
+
+            // Paddle Movement Updates
+            if (rightPressed && paddleX < canvas.width - paddleWidth) {
+                paddleX += 7;
+            } else if (leftPressed && paddleX > 0) {
+                paddleX -= 7;
+            }
+
+            // Step translation step variables
+            x += dx;
+            y += dy;
+
+            // Schedule next display framework refresh
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Execute Foundation Loop
+        gameLoop();
+    </script>
+</body>
+</html>
