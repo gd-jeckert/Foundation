@@ -30,6 +30,29 @@
             color: #888;
             margin-top: 10px;
         }
+        #controls {
+            display: flex;
+            gap: 50px;
+            margin-top: 15px;
+        }
+
+        .control-btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #444;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .control-btn:active {
+            background-color: #0095DD;
+        }
     </style>
 </head>
 <body>
@@ -38,6 +61,10 @@
     <canvas id="gameCanvas" width="480" height="320"></canvas>
     <p>Use Left / Right Arrow Keys (or A / D) to move. Press <b>P</b> to Pause.</p>
 
+    <div id="controls">
+        <button id="leftBtn" class="control-btn">◀ Left</button>
+        <button id="rightBtn" class="control-btn">Right ▶</button>
+    </div>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
@@ -89,6 +116,34 @@
         let score = 0;
         let totalscore = 0;
         let level = 1;
+
+        // Mobile Touch/Click Button Controls
+        const leftBtn = document.getElementById("leftBtn");
+        const rightBtn = document.getElementById("rightBtn");
+
+        function handleButtonStart(direction) {
+            if (direction === "left") leftPressed = true;
+            if (direction === "right") rightPressed = true;
+        }
+
+        function handleButtonEnd(direction) {
+            if (direction === "left") leftPressed = false;
+            if (direction === "right") rightPressed = false;
+        }       
+        
+        // Touch events for mobile
+        leftBtn.addEventListener("touchstart", (e) => { e.preventDefault(); handleButtonStart("left"); });
+        leftBtn.addEventListener("touchend", (e) => { e.preventDefault(); handleButtonEnd("left"); });
+        rightBtn.addEventListener("touchstart", (e) => { e.preventDefault(); handleButtonStart("right"); });
+        rightBtn.addEventListener("touchend", (e) => { e.preventDefault(); handleButtonEnd("right"); });
+            
+        // Mouse events as fallback for desktop testing
+        leftBtn.addEventListener("mousedown", () => handleButtonStart("left"));
+        leftBtn.addEventListener("mouseup", () => handleButtonEnd("left"));
+        leftBtn.addEventListener("mouseleave", () => handleButtonEnd("left"));
+        rightBtn.addEventListener("mousedown", () => handleButtonStart("right"));
+        rightBtn.addEventListener("mouseup", () => handleButtonEnd("right"));
+        rightBtn.addEventListener("mouseleave", () => handleButtonEnd("right"));        
 
         // Event Listeners for Input
         document.addEventListener("keydown", keyDownHandler, false);
