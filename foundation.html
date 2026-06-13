@@ -130,6 +130,30 @@
         // Pause Button for Mobile
         const pauseBtn = document.getElementById("pauseBtn");
 
+        // Resizing Screen Functions
+        function resizeCanvas() {
+            const maxWidth = window.innerWidth * 0.95;   // 95% of screen width
+            const maxHeight = window.innerHeight * 0.7;  // 70% of screen height
+    
+            // Maintain aspect ratio (480:320 = 1.5)
+            let newWidth = maxWidth;
+            let newHeight = maxWidth / 1.5;
+    
+            if (newHeight > maxHeight) {
+                newHeight = maxHeight;
+                newWidth = maxHeight * 1.5;
+            }
+    
+            canvas.style.width = newWidth + "px";
+            canvas.style.height = newHeight + "px";
+        }
+
+        // Call on load
+        resizeCanvas();
+
+        // Call on window resize
+        window.addEventListener("resize", resizeCanvas);
+        
         function handleButtonStart(direction) {
             if (direction === "left") leftPressed = true;
             if (direction === "right") rightPressed = true;
