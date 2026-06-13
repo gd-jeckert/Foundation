@@ -16,11 +16,13 @@
             justify-content: center;
             min-height: 100vh;
             overflow: hidden;
+            overscroll-behavior: none; /* Prevent pull-to-refresh on mobile */
         }
         canvas {
             background: #222;
             border: 4px solid #fff;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            touch-action: none; /* Prevent browser gestures on the canvas */
         }
         h1 {
             margin-bottom: 10px;
@@ -32,12 +34,12 @@
         }
         #controls {
             display: flex;
-            gap: 50px;
+            gap: 20px;
             margin-top: 15px;
         }
 
         .control-btn {
-            padding: 15px 30px;
+            padding: 15px 25px;
             font-size: 18px;
             font-weight: bold;
             color: #fff;
@@ -53,6 +55,10 @@
         .control-btn:active {
             background-color: #0095DD;
         }
+        .pause-btn {
+            min-width: 80px; /* Ensures it doesn't shrink when toggling text */
+        }
+
     </style>
 </head>
 <body>
@@ -64,6 +70,7 @@
     <div id="controls">
         <button id="leftBtn" class="control-btn">◀ Left</button>
         <button id="rightBtn" class="control-btn">Right ▶</button>
+        <button id="pauseBtn" class="control-btn pause-btn">Pause</button>
     </div>
     <script>
         const canvas = document.getElementById("gameCanvas");
@@ -120,6 +127,8 @@
         // Mobile Touch/Click Button Controls
         const leftBtn = document.getElementById("leftBtn");
         const rightBtn = document.getElementById("rightBtn");
+        // Pause Button for Mobile
+        const pauseBtn = document.getElementById("pauseBtn");
 
         function handleButtonStart(direction) {
             if (direction === "left") leftPressed = true;
@@ -129,13 +138,25 @@
         function handleButtonEnd(direction) {
             if (direction === "left") leftPressed = false;
             if (direction === "right") rightPressed = false;
-        }       
+        } 
+
+        function togglePause() {
+            if (gameState === RUNNING) {
+                gameState = PAUSED;
+                pauseBtn.textContent = "Resume"; // Optional: change label
+            } else if (gameState === PAUSED) {
+                clearCanvas();
+                gameState = RUNNING;
+                pauseBtn.textContent = "Pause"; // Optional: change label back
+            }
+        }
         
         // Touch events for mobile
         leftBtn.addEventListener("touchstart", (e) => { e.preventDefault(); handleButtonStart("left"); });
         leftBtn.addEventListener("touchend", (e) => { e.preventDefault(); handleButtonEnd("left"); });
         rightBtn.addEventListener("touchstart", (e) => { e.preventDefault(); handleButtonStart("right"); });
         rightBtn.addEventListener("touchend", (e) => { e.preventDefault(); handleButtonEnd("right"); });
+        pauseBtn.addEventListener("touchstart", (e) => {e.preventDefault();togglePause();});
             
         // Mouse events as fallback for desktop testing
         leftBtn.addEventListener("mousedown", () => handleButtonStart("left"));
@@ -144,6 +165,9 @@
         rightBtn.addEventListener("mousedown", () => handleButtonStart("right"));
         rightBtn.addEventListener("mouseup", () => handleButtonEnd("right"));
         rightBtn.addEventListener("mouseleave", () => handleButtonEnd("right"));        
+
+        //Pause Button
+        pauseBtn.addEventListener("click", togglePause);
 
         // Event Listeners for Input
         document.addEventListener("keydown", keyDownHandler, false);
