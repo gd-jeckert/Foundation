@@ -262,8 +262,11 @@
             dy = -2;
 
             //velocity increase per level
-            dx++;
-            ballvelocitydisplay++;
+            //dx++;
+            //ballvelocitydisplay++;
+            //Half a increase
+            ballvelocitydisplay = ballvelocitydisplay + 0.5;
+            dx=ballvelocitydisplay;
 
             // Reset paddle position
             paddleX = (canvas.width - paddleWidth) / 2;
